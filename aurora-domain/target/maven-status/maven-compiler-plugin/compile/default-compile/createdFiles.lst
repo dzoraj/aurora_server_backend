@@ -1,0 +1,9 @@
+rs\igapp\aurora\domain\entity\Severity.class
+rs\igapp\aurora\domain\entity\AlertStatus.class
+rs\igapp\aurora\domain\entity\LogEvent.class
+rs\igapp\aurora\domain\entity\RuleStatus.class
+rs\igapp\aurora\domain\entity\Rule.class
+rs\igapp\aurora\domain\entity\Incident.class
+rs\igapp\aurora\domain\entity\Alert.class
+rs\igapp\aurora\domain\entity\User.class
+rs\igapp\aurora\domain\entity\Source.class
