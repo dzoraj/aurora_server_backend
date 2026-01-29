@@ -18,6 +18,7 @@
     <module>aurora-api</module>
     <module>aurora-server</module>
     <module>aurora-agent</module>
+    <module>aurora-persistence</module>
   </modules>
 
   <properties>

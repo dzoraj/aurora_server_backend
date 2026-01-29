@@ -61,16 +61,19 @@ public class Incident {
         joinColumns = @JoinColumn(name = "incident_id"),
         inverseJoinColumns = @JoinColumn(name = "alert_id")
     )
+    @Builder.Default
     private Set<Alert> alerts = new HashSet<>();
 
     @Column
     private LocalDateTime resolvedAt;
 
     @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    @Builder.Default
+    private LocalDateTime createdAt = LocalDateTime.now();
 
     @Column
-    private LocalDateTime updatedAt;
+    @Builder.Default
+    private LocalDateTime updatedAt = LocalDateTime.now();
 
     @PrePersist
     protected void onCreate() {
