@@ -2,9 +2,6 @@ package rs.igapp.aurora.domain.entity;
 
 import java.time.LocalDateTime;
 
-import javax.print.attribute.standard.Severity;
-import javax.xml.transform.Source;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -45,7 +42,7 @@ public class LogEvent {
     private Severity severity;
 
     @Column(columnDefinition = "JSONB")
-    private String rawData;  // Extra metadata as JSON
+    private String rawData;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime timestamp;

@@ -15,7 +15,7 @@ import rs.igapp.aurora.domain.entity.LogEvent;
 @Repository
 public interface LogEventRepository extends JpaRepository<LogEvent, Long> {
 
-    Page<LogEvent> findBySourceId(String sourceId, Pageable pageable);
+    Page<LogEvent> findBySource_AgentId(String agentId, Pageable pageable);
 
     Page<LogEvent> findBySeverity_Id(Long severityId, Pageable pageable);
 
