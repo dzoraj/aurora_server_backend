@@ -15,7 +15,7 @@ public class LogEventResponse {
 
     private Long id;
 
-    private String sourceId;
+    private Long sourceId;
 
     private String message;
 

@@ -95,7 +95,7 @@ public class LogEventService extends CrudService<LogEvent, LogEventRequest, LogE
     protected LogEvent mapToEntity(LogEventRequest request) {
     	// korak 1: Pronadji izvor po agentId
     	// Ako izvor ne postoji, baca gresku (ne mozemo praviti log ako ne postoji izvor)
-        Source source = sourceRepository.findByAgentId(request.getSourceId())
+        Source source = sourceRepository.findById(request.getSourceId())
             .orElseThrow(() -> new RuntimeException("Source not found: " + request.getSourceId()));
         //KORAK 2: Pronaci bitnost ako je prilozena (opcionalno)
         // Ako je severityID null, onda bitnost(ozbiljnost) ostaje null (npr. informacioni log)
@@ -131,7 +131,7 @@ public class LogEventService extends CrudService<LogEvent, LogEventRequest, LogE
         return LogEventResponse.builder()
             .id(logEvent.getId())  // Kopira ID
             // Pretvara Source entitet u obican agentID string 
-            .sourceId(logEvent.getSource() != null ? logEvent.getSource().getAgentId() : null)
+            .sourceId(logEvent.getSource() != null ? logEvent.getSource().getId() : null)
             .message(logEvent.getMessage())  // Kopira poruku
             // Pretvara Severity entitet u obican name string 
             .severity(logEvent.getSeverity() != null ? logEvent.getSeverity().getName() : null)
@@ -160,7 +160,7 @@ public class LogEventService extends CrudService<LogEvent, LogEventRequest, LogE
     	// Korak 1: Azurirati izvor ako je prilozen
         if (request.getSourceId() != null) {
             // Pokusati pronaci novi izvor, ako ga nema zadrzavamo stari
-            Source source = sourceRepository.findByAgentId(request.getSourceId())
+            Source source = sourceRepository.findById(request.getSourceId())
                 .orElse(entity.getSource());
             entity.setSource(source);
         }

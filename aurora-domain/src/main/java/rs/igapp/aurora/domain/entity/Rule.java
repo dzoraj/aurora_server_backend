@@ -60,6 +60,14 @@ public class Rule {
     @Column
     private LocalDateTime updatedAt;
 
+    // SOFT DELETE FIELDS
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean isDeleted = false;
+
+    @Column
+    private LocalDateTime deletedAt;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

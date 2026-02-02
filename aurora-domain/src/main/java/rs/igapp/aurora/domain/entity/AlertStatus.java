@@ -1,5 +1,7 @@
 package rs.igapp.aurora.domain.entity;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -28,4 +30,12 @@ public class AlertStatus {
 
     @Column
     private String description;
+
+    // SOFT DELETE FIELDS
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean isDeleted = false;
+
+    @Column
+    private LocalDateTime deletedAt;
 }
