@@ -48,8 +48,9 @@ public abstract class CrudService<Entity, Request, Response, ID> {
 
     // DELETE
     public void delete(ID id) {
-        repository.deleteById(id);
+        repository.deleteById(id);  
     }
+
 
     protected abstract Entity mapToEntity(Request request);
     

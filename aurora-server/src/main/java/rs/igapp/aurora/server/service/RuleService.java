@@ -1,5 +1,14 @@
 package rs.igapp.aurora.server.service;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import rs.igapp.aurora.api.dto.request.RuleRequest;
 import rs.igapp.aurora.api.dto.response.RuleResponse;
 import rs.igapp.aurora.domain.entity.Rule;
@@ -8,13 +17,6 @@ import rs.igapp.aurora.domain.entity.Severity;
 import rs.igapp.aurora.persistence.repository.RuleRepository;
 import rs.igapp.aurora.persistence.repository.RuleStatusRepository;
 import rs.igapp.aurora.persistence.repository.SeverityRepository;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * RuleService - Upravljanje poslovnom logikom za "detekciona" pravila u SIEM sistemu
@@ -68,7 +70,7 @@ public class RuleService extends CrudService<Rule, RuleRequest, RuleResponse, Lo
    
     @Transactional(readOnly = true)
     public Page<RuleResponse> getByStatus(Long statusId, Pageable pageable) {
-        return ruleRepository.findByStatus_Id(statusId, pageable)
+        return ruleRepository.findByStatusId(statusId, pageable)
             .map(this::mapToResponse);
     }
 
@@ -82,7 +84,7 @@ public class RuleService extends CrudService<Rule, RuleRequest, RuleResponse, Lo
     // Dobaviti aktivna i ukljucena pravila za mehanizam detekcije
     @Transactional(readOnly = true)
     public List<RuleResponse> getActiveEnabledRules(Long statusId) {
-        return ruleRepository.findByEnabledAndStatus_Id(true, statusId).stream()
+        return ruleRepository.findByEnabledAndStatusId(true, statusId).stream()
             .map(this::mapToResponse)
             .collect(Collectors.toList());
     }
@@ -176,4 +178,16 @@ public class RuleService extends CrudService<Rule, RuleRequest, RuleResponse, Lo
 
 
     }
+    
+    // SOFT DELETE
+    @Override
+    @Transactional
+    public void delete(Long id) {
+        ruleRepository.findById(id).ifPresent(rule -> {
+            rule.setIsDeleted(true);
+            rule.setDeletedAt(LocalDateTime.now());
+            ruleRepository.save(rule);
+        });
+    }
+
 }
