@@ -14,22 +14,22 @@ import java.util.List;
 /**
  * 
  * ENDPOINTS:
- * - GET    /api/alerts/status/{statusId}     → Filter alerts by status
- * - GET    /api/alerts/severity/{severityId} → Filter alerts by severity
- * - GET    /api/alerts/rule/{ruleId}         → Get all alerts for specific rule
- * - GET    /api/alerts/range                 → Get alerts in time range
- * - GET    /api/alerts/analyst/{username}    → Get alerts assigned to analyst
- * - PATCH  /api/alerts/{id}/assign           → Assign alert to analyst
- * - PATCH  /api/alerts/{id}/notes            → Add investigation notes
- * - PATCH  /api/alerts/{id}/resolve          → Mark alert as resolved
- * - PATCH  /api/alerts/{id}/false-positive   → Mark as false positive
+ * - GET    /api/alerts/status/{statusId}     -> Filter alerts by status
+ * - GET    /api/alerts/severity/{severityId} -> Filter alerts by severity
+ * - GET    /api/alerts/rule/{ruleId}         -> Get all alerts for specific rule
+ * - GET    /api/alerts/range                 -> Get alerts in time range
+ * - GET    /api/alerts/analyst/{username}    -> Get alerts assigned to analyst
+ * - PATCH  /api/alerts/{id}/assign           -> Assign alert to analyst
+ * - PATCH  /api/alerts/{id}/notes            -> Add investigation notes
+ * - PATCH  /api/alerts/{id}/resolve          -> Mark alert as resolved
+ * - PATCH  /api/alerts/{id}/false-positive   -> Mark as false positive
  * 
  * NASLEDJENE CRUD OPERACIJE:
- * - POST   /api/alerts      → Create alert (typically done by DetectionEngine)
- * - GET    /api/alerts/{id} → Get single alert
- * - GET    /api/alerts      → Get paginated list of alerts
- * - PUT    /api/alerts/{id} → Update alert
- * - DELETE /api/alerts/{id} → Delete alert (soft delete)
+ * - POST   /api/alerts      -> Create alert (typically done by DetectionEngine)
+ * - GET    /api/alerts/{id} -> Get single alert
+ * - GET    /api/alerts      -> Get paginated list of alerts
+ * - PUT    /api/alerts/{id} -> Update alert
+ * - DELETE /api/alerts/{id} -> Delete alert (soft delete)
  */
 @RestController
 @RequestMapping("/api/alerts")
