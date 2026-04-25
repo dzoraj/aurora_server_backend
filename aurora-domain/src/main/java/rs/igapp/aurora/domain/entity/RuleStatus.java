@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RuleStatus {
+public class RuleStatus implements SoftDeletable{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

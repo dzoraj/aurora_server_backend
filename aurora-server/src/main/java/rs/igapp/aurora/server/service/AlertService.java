@@ -76,7 +76,7 @@ import java.util.stream.Collectors;
 */
 
 @Service
-public class AlertService extends CrudService<Alert, AlertRequest, AlertResponse, Long> {
+public class AlertService extends SoftDeleteCrudService<Alert, AlertRequest, AlertResponse, Long> {
 
     private final AlertRepository alertRepository;
     private final RuleRepository ruleRepository;
@@ -104,21 +104,21 @@ public class AlertService extends CrudService<Alert, AlertRequest, AlertResponse
 
     @Transactional(readOnly = true)
     public Page<AlertResponse> getByStatus(Long statusId, Pageable pageable) {
-        return alertRepository.findByStatus_Id(statusId, pageable)
+        return alertRepository.findByStatusId(statusId, pageable)
             .map(this::mapToResponse);
     }
 
 
     @Transactional(readOnly = true)
     public Page<AlertResponse> getBySeverity(Long severityId, Pageable pageable) {
-        return alertRepository.findBySeverity_Id(severityId, pageable)
+        return alertRepository.findBySeverityId(severityId, pageable)
             .map(this::mapToResponse);
     }
 
 
     @Transactional(readOnly = true)
     public Page<AlertResponse> getByRule(Long ruleId, Pageable pageable) {
-        return alertRepository.findByRule_Id(ruleId, pageable)
+        return alertRepository.findByRuleId(ruleId, pageable)
             .map(this::mapToResponse);
     }
 
@@ -131,7 +131,7 @@ public class AlertService extends CrudService<Alert, AlertRequest, AlertResponse
 
     @Transactional(readOnly = true)
     public long countByStatus(Long statusId) {
-        return alertRepository.countByStatus_Id(statusId);
+        return alertRepository.countByStatusId(statusId);
     }
 
 
@@ -145,12 +145,12 @@ public class AlertService extends CrudService<Alert, AlertRequest, AlertResponse
 
     @Transactional
     public AlertResponse assignToAnalyst(Long alertId, String analystUsername, Long investigatingStatusId) {
-        return alertRepository.findById(alertId)
+        return alertRepository.findByIdAndIsDeletedFalse(alertId)
             .map(alert -> {
                 alert.setAssignedTo(analystUsername);
                 
                 // Change status to INVESTIGATING
-                AlertStatus investigatingStatus = alertStatusRepository.findById(investigatingStatusId)
+                AlertStatus investigatingStatus = alertStatusRepository.findByIdAndIsDeletedFalse(investigatingStatusId)
                     .orElseThrow(() -> new RuntimeException("AlertStatus not found: " + investigatingStatusId));
                 alert.setStatus(investigatingStatus);
                 
@@ -164,7 +164,7 @@ public class AlertService extends CrudService<Alert, AlertRequest, AlertResponse
 
     @Transactional
     public AlertResponse addInvestigationNotes(Long alertId, String notes) {
-        return alertRepository.findById(alertId)
+        return alertRepository.findByIdAndIsDeletedFalse(alertId)
             .map(alert -> {
                 alert.setInvestigationNotes(notes);
                 Alert updated = alertRepository.save(alert);
@@ -177,9 +177,9 @@ public class AlertService extends CrudService<Alert, AlertRequest, AlertResponse
 
     @Transactional
     public AlertResponse resolveAlert(Long alertId, Long resolvedStatusId) {
-        return alertRepository.findById(alertId)
+        return alertRepository.findByIdAndIsDeletedFalse(alertId)
             .map(alert -> {
-                AlertStatus resolvedStatus = alertStatusRepository.findById(resolvedStatusId)
+                AlertStatus resolvedStatus = alertStatusRepository.findByIdAndIsDeletedFalse(resolvedStatusId)
                     .orElseThrow(() -> new RuntimeException("AlertStatus not found: " + resolvedStatusId));
                 
                 alert.setStatus(resolvedStatus);
@@ -195,9 +195,9 @@ public class AlertService extends CrudService<Alert, AlertRequest, AlertResponse
 
     @Transactional
     public AlertResponse markAsFalsePositive(Long alertId, Long falsePositiveStatusId) {
-        return alertRepository.findById(alertId)
+        return alertRepository.findByIdAndIsDeletedFalse(alertId)
             .map(alert -> {
-                AlertStatus fpStatus = alertStatusRepository.findById(falsePositiveStatusId)
+                AlertStatus fpStatus = alertStatusRepository.findByIdAndIsDeletedFalse(falsePositiveStatusId)
                     .orElseThrow(() -> new RuntimeException("AlertStatus not found: " + falsePositiveStatusId));
                 
                 alert.setStatus(fpStatus);
@@ -213,19 +213,19 @@ public class AlertService extends CrudService<Alert, AlertRequest, AlertResponse
     @Override
     protected Alert mapToEntity(AlertRequest request) {
         // Find related entities (all required)
-        Rule rule = ruleRepository.findById(request.getRuleId())
+        Rule rule = ruleRepository.findByIdAndIsDeletedFalse(request.getRuleId())
             .orElseThrow(() -> new RuntimeException("Rule not found: " + request.getRuleId()));
         
         LogEvent logEvent = logEventRepository.findById(request.getLogEventId())
             .orElseThrow(() -> new RuntimeException("LogEvent not found: " + request.getLogEventId()));
         
-        Source source = sourceRepository.findById(request.getSourceId())
+        Source source = sourceRepository.findByIdAndIsDeletedFalse(request.getSourceId())
             .orElseThrow(() -> new RuntimeException("Source not found: " + request.getSourceId()));
         
-        Severity severity = severityRepository.findById(request.getSeverityId())
+        Severity severity = severityRepository.findByIdAndIsDeletedFalse(request.getSeverityId())
             .orElseThrow(() -> new RuntimeException("Severity not found: " + request.getSeverityId()));
         
-        AlertStatus status = alertStatusRepository.findById(request.getStatusId())
+        AlertStatus status = alertStatusRepository.findByIdAndIsDeletedFalse(request.getStatusId())
             .orElseThrow(() -> new RuntimeException("AlertStatus not found: " + request.getStatusId()));
 
         return Alert.builder()
@@ -269,7 +269,7 @@ public class AlertService extends CrudService<Alert, AlertRequest, AlertResponse
 
         // Update Rule if provided
         if (request.getRuleId() != null) {
-            Rule rule = ruleRepository.findById(request.getRuleId())
+            Rule rule = ruleRepository.findByIdAndIsDeletedFalse(request.getRuleId())
                 .orElse(entity.getRule());
             entity.setRule(rule);
         }
@@ -283,21 +283,21 @@ public class AlertService extends CrudService<Alert, AlertRequest, AlertResponse
 
         // Update Source if provided
         if (request.getSourceId() != null) {
-            Source source = sourceRepository.findById(request.getSourceId())
+            Source source = sourceRepository.findByIdAndIsDeletedFalse(request.getSourceId())
                 .orElse(entity.getSource());
             entity.setSource(source);
         }
 
         // Update Severity if provided
         if (request.getSeverityId() != null) {
-            Severity severity = severityRepository.findById(request.getSeverityId())
+            Severity severity = severityRepository.findByIdAndIsDeletedFalse(request.getSeverityId())
                 .orElse(entity.getSeverity());
             entity.setSeverity(severity);
         }
 
         // Update AlertStatus if provided
         if (request.getStatusId() != null) {
-            AlertStatus status = alertStatusRepository.findById(request.getStatusId())
+            AlertStatus status = alertStatusRepository.findByIdAndIsDeletedFalse(request.getStatusId())
                 .orElse(entity.getStatus());
             entity.setStatus(status);
         }

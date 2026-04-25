@@ -40,7 +40,7 @@ import rs.igapp.aurora.persistence.repository.SeverityRepository;
  * Enabled: true
  */
 @Service
-public class RuleService extends CrudService<Rule, RuleRequest, RuleResponse, Long> {
+public class RuleService extends SoftDeleteCrudService<Rule, RuleRequest, RuleResponse, Long> {
 
     private final RuleRepository ruleRepository;
     private final RuleStatusRepository ruleStatusRepository;
@@ -84,6 +84,12 @@ public class RuleService extends CrudService<Rule, RuleRequest, RuleResponse, Lo
     // Dobaviti aktivna i ukljucena pravila za mehanizam detekcije
     @Transactional(readOnly = true)
     public List<RuleResponse> getActiveEnabledRules(Long statusId) {
+        if (statusId == null) {
+            return ruleRepository.findByEnabled(true).stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+        }
+
         return ruleRepository.findByEnabledAndStatusId(true, statusId).stream()
             .map(this::mapToResponse)
             .collect(Collectors.toList());
@@ -93,7 +99,7 @@ public class RuleService extends CrudService<Rule, RuleRequest, RuleResponse, Lo
     
     @Transactional
     public RuleResponse toggleEnabled(Long ruleId, Boolean enabled) {
-        return ruleRepository.findById(ruleId)
+        return ruleRepository.findByIdAndIsDeletedFalse(ruleId)
             .map(rule -> {
                 rule.setEnabled(enabled);
                 Rule updated = ruleRepository.save(rule);
@@ -108,13 +114,13 @@ public class RuleService extends CrudService<Rule, RuleRequest, RuleResponse, Lo
     protected Rule mapToEntity(RuleRequest request) {
     	// Pronadji RuleStatus entitet
         RuleStatus ruleStatus = request.getStatusId() != null
-            ? ruleStatusRepository.findById(request.getStatusId())
+            ? ruleStatusRepository.findByIdAndIsDeletedFalse(request.getStatusId())
                 .orElseThrow(() -> new RuntimeException("RuleStatus not found: " + request.getStatusId()))
             : null;
 
         // Pronadji Severity entitet
         Severity severity = request.getDefaultSeverityId() != null
-            ? severityRepository.findById(request.getDefaultSeverityId())
+            ? severityRepository.findByIdAndIsDeletedFalse(request.getDefaultSeverityId())
                 .orElseThrow(() -> new RuntimeException("Severity not found: " + request.getDefaultSeverityId()))
             : null;
 
@@ -164,14 +170,14 @@ public class RuleService extends CrudService<Rule, RuleRequest, RuleResponse, Lo
 
 
         if (request.getStatusId() != null) {
-            RuleStatus ruleStatus = ruleStatusRepository.findById(request.getStatusId())
+            RuleStatus ruleStatus = ruleStatusRepository.findByIdAndIsDeletedFalse(request.getStatusId())
                 .orElse(entity.getStatus());
             entity.setStatus(ruleStatus);
         }
 
 
         if (request.getDefaultSeverityId() != null) {
-            Severity severity = severityRepository.findById(request.getDefaultSeverityId())
+            Severity severity = severityRepository.findByIdAndIsDeletedFalse(request.getDefaultSeverityId())
                 .orElse(entity.getDefaultSeverity());
             entity.setDefaultSeverity(severity);
         }
@@ -183,7 +189,7 @@ public class RuleService extends CrudService<Rule, RuleRequest, RuleResponse, Lo
     @Override
     @Transactional
     public void delete(Long id) {
-        ruleRepository.findById(id).ifPresent(rule -> {
+        ruleRepository.findByIdAndIsDeletedFalse(id).ifPresent(rule -> {
             rule.setIsDeleted(true);
             rule.setDeletedAt(LocalDateTime.now());
             ruleRepository.save(rule);

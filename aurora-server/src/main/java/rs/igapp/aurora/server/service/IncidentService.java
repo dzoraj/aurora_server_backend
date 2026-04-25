@@ -162,7 +162,7 @@ public class IncidentService extends CrudService<Incident, IncidentRequest, Inci
         Incident incident = incidentRepository.findById(incidentId)
             .orElseThrow(() -> new RuntimeException("Incident not found: " + incidentId));
         
-        Alert alert = alertRepository.findById(alertId)
+        Alert alert = alertRepository.findByIdAndIsDeletedFalse(alertId)
             .orElseThrow(() -> new RuntimeException("Alert not found: " + alertId));
         
         // Add alert to incident's alert set (many-to-many)
@@ -179,7 +179,7 @@ public class IncidentService extends CrudService<Incident, IncidentRequest, Inci
         Incident incident = incidentRepository.findById(incidentId)
             .orElseThrow(() -> new RuntimeException("Incident not found: " + incidentId));
         
-        Alert alert = alertRepository.findById(alertId)
+        Alert alert = alertRepository.findByIdAndIsDeletedFalse(alertId)
             .orElseThrow(() -> new RuntimeException("Alert not found: " + alertId));
         
         // Remove alert from incident's alert set
@@ -200,7 +200,7 @@ public class IncidentService extends CrudService<Incident, IncidentRequest, Inci
         if (alertIds != null && !alertIds.isEmpty()) {
             Set<Alert> alerts = new HashSet<>();
             for (Long alertId : alertIds) {
-                Alert alert = alertRepository.findById(alertId)
+                Alert alert = alertRepository.findByIdAndIsDeletedFalse(alertId)
                     .orElseThrow(() -> new RuntimeException("Alert not found: " + alertId));
                 alerts.add(alert);
             }
@@ -217,6 +217,7 @@ public class IncidentService extends CrudService<Incident, IncidentRequest, Inci
     public Set<Long> getIncidentAlerts(Long incidentId) {
         return incidentRepository.findById(incidentId)
             .map(incident -> incident.getAlerts().stream()
+                .filter(alert -> !Boolean.TRUE.equals(alert.getIsDeleted()))
                 .map(Alert::getId)
                 .collect(Collectors.toSet()))
             .orElse(new HashSet<>());
@@ -233,7 +234,7 @@ public class IncidentService extends CrudService<Incident, IncidentRequest, Inci
                 incident.setAssignedTo(analystUsername);
                 
                 // Change status to INVESTIGATING
-                AlertStatus investigatingStatus = alertStatusRepository.findById(investigatingStatusId)
+                AlertStatus investigatingStatus = alertStatusRepository.findByIdAndIsDeletedFalse(investigatingStatusId)
                     .orElseThrow(() -> new RuntimeException("Status not found: " + investigatingStatusId));
                 incident.setStatus(investigatingStatus);
                 
@@ -262,7 +263,7 @@ public class IncidentService extends CrudService<Incident, IncidentRequest, Inci
     public IncidentResponse resolveIncident(Long incidentId, Long resolvedStatusId) {
         return incidentRepository.findById(incidentId)
             .map(incident -> {
-                AlertStatus resolvedStatus = alertStatusRepository.findById(resolvedStatusId)
+                AlertStatus resolvedStatus = alertStatusRepository.findByIdAndIsDeletedFalse(resolvedStatusId)
                     .orElseThrow(() -> new RuntimeException("Status not found: " + resolvedStatusId));
                 
                 incident.setStatus(resolvedStatus);
@@ -280,7 +281,7 @@ public class IncidentService extends CrudService<Incident, IncidentRequest, Inci
     public IncidentResponse markAsFalsePositive(Long incidentId, Long falsePositiveStatusId) {
         return incidentRepository.findById(incidentId)
             .map(incident -> {
-                AlertStatus fpStatus = alertStatusRepository.findById(falsePositiveStatusId)
+                AlertStatus fpStatus = alertStatusRepository.findByIdAndIsDeletedFalse(falsePositiveStatusId)
                     .orElseThrow(() -> new RuntimeException("Status not found: " + falsePositiveStatusId));
                 
                 incident.setStatus(fpStatus);
@@ -308,12 +309,12 @@ public class IncidentService extends CrudService<Incident, IncidentRequest, Inci
     protected Incident mapToEntity(IncidentRequest request) {
         // Find related entities
         Severity severity = request.getSeverityId() != null
-            ? severityRepository.findById(request.getSeverityId())
+            ? severityRepository.findByIdAndIsDeletedFalse(request.getSeverityId())
                 .orElseThrow(() -> new RuntimeException("Severity not found: " + request.getSeverityId()))
             : null;
         
         AlertStatus status = request.getStatusId() != null
-            ? alertStatusRepository.findById(request.getStatusId())
+            ? alertStatusRepository.findByIdAndIsDeletedFalse(request.getStatusId())
                 .orElseThrow(() -> new RuntimeException("Status not found: " + request.getStatusId()))
             : null;
 
@@ -341,6 +342,7 @@ public class IncidentService extends CrudService<Incident, IncidentRequest, Inci
         // Extract alert IDs from ManyToMany relationship
         Set<Long> alertIds = incident.getAlerts() != null
             ? incident.getAlerts().stream()
+                .filter(alert -> !Boolean.TRUE.equals(alert.getIsDeleted()))
                 .map(Alert::getId)
                 .collect(Collectors.toSet())
             : new HashSet<>();
@@ -379,14 +381,14 @@ public class IncidentService extends CrudService<Incident, IncidentRequest, Inci
 
         // Update Severity if provided
         if (request.getSeverityId() != null) {
-            Severity severity = severityRepository.findById(request.getSeverityId())
+            Severity severity = severityRepository.findByIdAndIsDeletedFalse(request.getSeverityId())
                 .orElse(entity.getSeverity());
             entity.setSeverity(severity);
         }
 
         // Update AlertStatus if provided
         if (request.getStatusId() != null) {
-            AlertStatus status = alertStatusRepository.findById(request.getStatusId())
+            AlertStatus status = alertStatusRepository.findByIdAndIsDeletedFalse(request.getStatusId())
                 .orElse(entity.getStatus());
             entity.setStatus(status);
         }

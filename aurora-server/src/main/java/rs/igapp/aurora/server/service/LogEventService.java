@@ -95,12 +95,12 @@ public class LogEventService extends CrudService<LogEvent, LogEventRequest, LogE
     protected LogEvent mapToEntity(LogEventRequest request) {
     	// korak 1: Pronadji izvor po agentId
     	// Ako izvor ne postoji, baca gresku (ne mozemo praviti log ako ne postoji izvor)
-        Source source = sourceRepository.findById(request.getSourceId())
+        Source source = sourceRepository.findByIdAndIsDeletedFalse(request.getSourceId())
             .orElseThrow(() -> new RuntimeException("Source not found: " + request.getSourceId()));
         //KORAK 2: Pronaci bitnost ako je prilozena (opcionalno)
         // Ako je severityID null, onda bitnost(ozbiljnost) ostaje null (npr. informacioni log)
         Severity severity = request.getSeverityId() != null 
-            ? severityRepository.findById(request.getSeverityId()).orElse(null)
+            ? severityRepository.findByIdAndIsDeletedFalse(request.getSeverityId()).orElse(null)
             : null;
         // Korak 3: Sagraditi LogEvent entity 
         return LogEvent.builder()
@@ -160,7 +160,7 @@ public class LogEventService extends CrudService<LogEvent, LogEventRequest, LogE
     	// Korak 1: Azurirati izvor ako je prilozen
         if (request.getSourceId() != null) {
             // Pokusati pronaci novi izvor, ako ga nema zadrzavamo stari
-            Source source = sourceRepository.findById(request.getSourceId())
+            Source source = sourceRepository.findByIdAndIsDeletedFalse(request.getSourceId())
                 .orElse(entity.getSource());
             entity.setSource(source);
         }
@@ -171,7 +171,7 @@ public class LogEventService extends CrudService<LogEvent, LogEventRequest, LogE
         entity.setRawData(request.getRawData());
         // KORAK 4: Azurirati ozbiljnost ako je prilozena
         if (request.getSeverityId() != null) {
-            entity.setSeverity(severityRepository.findById(request.getSeverityId()).orElse(null));
+            entity.setSeverity(severityRepository.findByIdAndIsDeletedFalse(request.getSeverityId()).orElse(null));
         }
         // Korak 5: Azurirati vreme ako je prilozeno
         if (request.getTimestamp() != null) {

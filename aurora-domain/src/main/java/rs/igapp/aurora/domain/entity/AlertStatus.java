@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class AlertStatus {
+public class AlertStatus implements SoftDeletable{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -22,7 +22,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Source {
+public class Source implements SoftDeletable{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

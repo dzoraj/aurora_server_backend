@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Severity {
+public class Severity implements SoftDeletable{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

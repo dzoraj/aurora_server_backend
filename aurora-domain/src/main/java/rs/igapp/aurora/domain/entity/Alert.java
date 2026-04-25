@@ -1,7 +1,6 @@
 package rs.igapp.aurora.domain.entity;
 
 import java.time.LocalDateTime;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -23,7 +22,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Alert {
+public class Alert implements SoftDeletable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -53,7 +52,7 @@ public class Alert {
     private String message;
 
     @Column
-    private String assignedTo;  // Analyst username
+    private String assignedTo; // Analyst username
 
     @Column(columnDefinition = "TEXT")
     private String investigationNotes;
@@ -66,6 +65,14 @@ public class Alert {
 
     @Column
     private LocalDateTime updatedAt;
+
+    // SOFT DELETE FIELDS
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean isDeleted = false;
+
+    @Column
+    private LocalDateTime deletedAt;
 
     @PrePersist
     protected void onCreate() {
