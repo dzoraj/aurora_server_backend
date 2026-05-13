@@ -19,8 +19,13 @@ public interface RuleRepository extends SoftDeleteRepository<Rule, Long> {
     @Query("SELECT r FROM Rule r WHERE r.status.id = :statusId AND r.isDeleted = false")
     Page<Rule> findByStatusId(@Param("statusId") Long statusId, Pageable pageable);
 
-    @Query("SELECT r FROM Rule r WHERE r.name LIKE %:name% AND r.isDeleted = false")
-    Page<Rule> searchByName(@Param("name") String name, Pageable pageable);
+    @Query("""
+    	    SELECT r
+    	    FROM Rule r
+    	    WHERE LOWER(r.name) LIKE LOWER(CONCAT('%', :name, '%'))
+    	      AND r.isDeleted = false
+    	""")
+    	Page<Rule> searchByName(@Param("name") String name, Pageable pageable);
 
     @Query("SELECT r FROM Rule r WHERE r.enabled = :enabled AND r.status.id = :statusId AND r.isDeleted = false")
     List<Rule> findByEnabledAndStatusId(@Param("enabled") Boolean enabled, @Param("statusId") Long statusId);
