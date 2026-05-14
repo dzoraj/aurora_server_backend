@@ -1,19 +1,5 @@
--- =============================================================================
--- Aurora SIEM — PostgreSQL seed data
--- =============================================================================
--- Schema is created by Hibernate from entities (spring.jpa.hibernate.ddl-auto=create).
--- Column names follow Spring Boot’s default physical naming (camelCase → snake_case).
---
--- When to run:
---   1) Start the Spring app once so tables exist (ddl-auto=create), OR use a DB
---      where the Hibernate schema is already present.
---   2) Stop the app if ddl-auto=create is still on (otherwise the next start drops
---      all data). Prefer ddl-auto=validate (or none) + Flyway later for production.
---   3) Run this script against database `aurora`, e.g.:
---        psql -h localhost -U postgres -d aurora -f scripts/seed-aurora-postgresql.sql
---
--- Re-runnable: truncates application tables in FK-safe order, then inserts.
--- =============================================================================
+
+-- Aurora SIEM -- PostgreSQL seed data
 
 BEGIN;
 
@@ -27,18 +13,14 @@ TRUNCATE TABLE rule_statuses RESTART IDENTITY CASCADE;
 TRUNCATE TABLE alert_statuses RESTART IDENTITY CASCADE;
 TRUNCATE TABLE severities RESTART IDENTITY CASCADE;
 
--- ---------------------------------------------------------------------------
--- Lookup: rule lifecycle (Rule.status)
--- ---------------------------------------------------------------------------
+
 INSERT INTO rule_statuses (id, name, description, is_deleted, deleted_at)
 VALUES
   (1, 'ACTIVE',   'Rule is evaluated by the detection engine', false, NULL),
   (2, 'INACTIVE', 'Rule exists but is not evaluated',            false, NULL),
   (3, 'ARCHIVED', 'Retired rule kept for audit',                  false, NULL);
 
--- ---------------------------------------------------------------------------
--- Lookup: severity (Rule.defaultSeverity, LogEvent.severity, Alert, Incident)
--- ---------------------------------------------------------------------------
+
 INSERT INTO severities (id, name, level, description, is_deleted, deleted_at)
 VALUES
   (1, 'INFO',     1, 'Informational',        false, NULL),
@@ -47,9 +29,7 @@ VALUES
   (4, 'HIGH',     4, 'High priority',        false, NULL),
   (5, 'CRITICAL', 5, 'Critical / immediate', false, NULL);
 
--- ---------------------------------------------------------------------------
--- Lookup: alert & incident workflow (Alert.status, Incident.status → same table)
--- ---------------------------------------------------------------------------
+
 INSERT INTO alert_statuses (id, name, description, is_deleted, deleted_at)
 VALUES
   (1, 'NEW',             'New alert / incident not triaged', false, NULL),
@@ -57,9 +37,7 @@ VALUES
   (3, 'RESOLVED',        'Closed as legitimate / fixed',   false, NULL),
   (4, 'FALSE_POSITIVE',  'Benign or incorrect detection',  false, NULL);
 
--- ---------------------------------------------------------------------------
--- Agents / log sources
--- ---------------------------------------------------------------------------
+
 INSERT INTO sources (
   id, agent_id, hostname, ip_address, os_type, agent_version, is_active,
   last_heartbeat, created_at, updated_at, is_deleted, deleted_at
@@ -93,9 +71,7 @@ INSERT INTO sources (
     NULL
   );
 
--- ---------------------------------------------------------------------------
--- Detection rules
--- ---------------------------------------------------------------------------
+
 INSERT INTO rules (
   id, name, description, condition, status_id, severity_id, enabled, alert_message,
   created_at, updated_at, is_deleted, deleted_at
@@ -143,9 +119,7 @@ INSERT INTO rules (
     NULL
   );
 
--- ---------------------------------------------------------------------------
--- Raw log lines (ingestion)
--- ---------------------------------------------------------------------------
+
 INSERT INTO log_events (
   id, source_id, message, severity_id, raw_data, timestamp, created_at
 ) VALUES
@@ -186,9 +160,6 @@ INSERT INTO log_events (
     NOW() - INTERVAL '15 minutes'
   );
 
--- ---------------------------------------------------------------------------
--- Alerts (detection output)
--- ---------------------------------------------------------------------------
 INSERT INTO alerts (
   id, rule_id, log_event_id, source_id, severity_id, status_id,
   message, assigned_to, investigation_notes, resolved_at,
@@ -259,9 +230,6 @@ INSERT INTO alerts (
     NULL
   );
 
--- ---------------------------------------------------------------------------
--- Incidents (open = resolved_at IS NULL per IncidentRepository.findOpenIncidents)
--- ---------------------------------------------------------------------------
 INSERT INTO incidents (
   id, title, description, severity_id, status_id, assigned_to, timeline,
   resolved_at, created_at, updated_at
@@ -296,9 +264,7 @@ INSERT INTO incident_alerts (incident_id, alert_id) VALUES
   (1, 2),
   (2, 4);
 
--- ---------------------------------------------------------------------------
--- Keep SERIAL / IDENTITY in sync for future Hibernate inserts
--- ---------------------------------------------------------------------------
+
 SELECT setval(pg_get_serial_sequence('rule_statuses', 'id'),  (SELECT COALESCE(MAX(id), 1) FROM rule_statuses),  true);
 SELECT setval(pg_get_serial_sequence('severities', 'id'),    (SELECT COALESCE(MAX(id), 1) FROM severities),    true);
 SELECT setval(pg_get_serial_sequence('alert_statuses', 'id'), (SELECT COALESCE(MAX(id), 1) FROM alert_statuses), true);
