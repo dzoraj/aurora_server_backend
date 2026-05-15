@@ -1,6 +1,6 @@
 package rs.igapp.aurora.api.dto.request;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -25,5 +25,9 @@ public class LogEventRequest {
 
     private String rawData;  // JSON as string
 
-    private LocalDateTime timestamp;
+    /**
+     * Optional event time. Accepts ISO-8601 with offset or Z (e.g. from {@code new Date().toISOString()} in the browser).
+     * Stored as {@code LocalDateTime} using the date-time fields from this value (same wall clock as in the payload).
+     */
+    private OffsetDateTime timestamp;
 }

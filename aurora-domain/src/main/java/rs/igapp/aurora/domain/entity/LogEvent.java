@@ -41,7 +41,7 @@ public class LogEvent {
     @JoinColumn(name = "severity_id")
     private Severity severity;
 
-    @Column(columnDefinition = "JSONB")
+    @Column(columnDefinition = "TEXT")
     private String rawData;
 
     @Column(nullable = false, updatable = false)

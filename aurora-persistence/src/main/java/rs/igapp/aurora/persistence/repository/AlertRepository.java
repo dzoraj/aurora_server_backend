@@ -36,4 +36,13 @@ public interface AlertRepository extends SoftDeleteRepository<Alert, Long> {
     """)
     List<Alert> findOpenAlertsByAnalyst(@Param("analyst") String analyst,
                                         @Param("resolvedStatusId") Long resolvedStatusId);
+
+    @Query(
+            """
+            SELECT COUNT(a) FROM Alert a
+            WHERE a.rule.id = :ruleId
+              AND a.triggeringLogEvent.id = :logEventId
+              AND a.isDeleted = false
+            """)
+    long countByRuleAndTriggeringLogEvent(@Param("ruleId") Long ruleId, @Param("logEventId") Long logEventId);
 }

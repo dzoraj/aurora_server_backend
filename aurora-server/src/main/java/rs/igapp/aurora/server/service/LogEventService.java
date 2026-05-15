@@ -8,10 +8,15 @@ import rs.igapp.aurora.domain.entity.Source;
 import rs.igapp.aurora.persistence.repository.LogEventRepository;
 import rs.igapp.aurora.persistence.repository.SeverityRepository;
 import rs.igapp.aurora.persistence.repository.SourceRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
+import rs.igapp.aurora.server.detection.LogEventCreatedEvent;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -43,15 +48,18 @@ public class LogEventService extends CrudService<LogEvent, LogEventRequest, LogE
 
     private final LogEventRepository logEventRepository;  
     private final SeverityRepository severityRepository; 
-    private final SourceRepository sourceRepository;  
+    private final SourceRepository sourceRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public LogEventService(LogEventRepository logEventRepository, 
                           SeverityRepository severityRepository,
-                          SourceRepository sourceRepository) {
+                          SourceRepository sourceRepository,
+                          ApplicationEventPublisher eventPublisher) {
         super(logEventRepository); 
         this.logEventRepository = logEventRepository;
         this.severityRepository = severityRepository;
         this.sourceRepository = sourceRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     // ==================== METODE PRETRAGE ====================
@@ -93,23 +101,47 @@ public class LogEventService extends CrudService<LogEvent, LogEventRequest, LogE
 
     @Override
     protected LogEvent mapToEntity(LogEventRequest request) {
+        if (request.getSourceId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "sourceId is required");
+        }
+        if (request.getMessage() == null || request.getMessage().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "message is required");
+        }
     	// korak 1: Pronadji izvor po agentId
     	// Ako izvor ne postoji, baca gresku (ne mozemo praviti log ako ne postoji izvor)
-        Source source = sourceRepository.findByIdAndIsDeletedFalse(request.getSourceId())
-            .orElseThrow(() -> new RuntimeException("Source not found: " + request.getSourceId()));
+        Source source =
+                sourceRepository
+                        .findByIdAndIsDeletedFalse(request.getSourceId())
+                        .orElseThrow(
+                                () ->
+                                        new ResponseStatusException(
+                                                HttpStatus.NOT_FOUND,
+                                                "Source not found for id " + request.getSourceId()));
         //KORAK 2: Pronaci bitnost ako je prilozena (opcionalno)
         // Ako je severityID null, onda bitnost(ozbiljnost) ostaje null (npr. informacioni log)
-        Severity severity = request.getSeverityId() != null 
-            ? severityRepository.findByIdAndIsDeletedFalse(request.getSeverityId()).orElse(null)
-            : null;
+        Severity severity = null;
+        if (request.getSeverityId() != null && request.getSeverityId() > 0) {
+            severity = severityRepository.findByIdAndIsDeletedFalse(request.getSeverityId()).orElse(null);
+        }
         // Korak 3: Sagraditi LogEvent entity 
         return LogEvent.builder()
             .source(source)           // Povezati na Source entity
             .message(request.getMessage())  // Kopirati tekst poruke
             .severity(severity)       // Povezati na Severity entity (ILI null)
-            .rawData(request.getRawData())  // Kopirati raw JSON data
-            .timestamp(request.getTimestamp() != null ? request.getTimestamp() : LocalDateTime.now())  // Koristiti prilozeno vreme ILI trenutno vreme ako nije prilozeno nista
+            .rawData(normalizeRawData(request.getRawData()))  // TEXT column; blank -> null
+            .timestamp(
+                    request.getTimestamp() != null
+                            ? request.getTimestamp().toLocalDateTime()
+                            : LocalDateTime.now())  // Koristiti prilozeno vreme ILI trenutno vreme ako nije prilozeno nista
             .build();
+    }
+
+    private static String normalizeRawData(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String t = raw.trim();
+        return t.isEmpty() ? null : t;
     }
 
     /**
@@ -168,16 +200,24 @@ public class LogEventService extends CrudService<LogEvent, LogEventRequest, LogE
 
         entity.setMessage(request.getMessage());
         // Korak 3: Azurirati raw podatke (uvek azurirati, moze biti null)
-        entity.setRawData(request.getRawData());
+        entity.setRawData(normalizeRawData(request.getRawData()));
         // KORAK 4: Azurirati ozbiljnost ako je prilozena
-        if (request.getSeverityId() != null) {
+        if (request.getSeverityId() != null && request.getSeverityId() > 0) {
             entity.setSeverity(severityRepository.findByIdAndIsDeletedFalse(request.getSeverityId()).orElse(null));
         }
         // Korak 5: Azurirati vreme ako je prilozeno
         if (request.getTimestamp() != null) {
-            entity.setTimestamp(request.getTimestamp());
+            entity.setTimestamp(request.getTimestamp().toLocalDateTime());
         }
         
 
+    }
+
+    @Override
+    public LogEventResponse create(LogEventRequest request) {
+        LogEvent entity = mapToEntity(request);
+        LogEvent saved = repository.saveAndFlush(entity);
+        eventPublisher.publishEvent(new LogEventCreatedEvent(saved.getId()));
+        return mapToResponse(saved);
     }
 }

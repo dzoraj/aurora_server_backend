@@ -29,4 +29,19 @@ public interface RuleRepository extends SoftDeleteRepository<Rule, Long> {
 
     @Query("SELECT r FROM Rule r WHERE r.enabled = :enabled AND r.status.id = :statusId AND r.isDeleted = false")
     List<Rule> findByEnabledAndStatusId(@Param("enabled") Boolean enabled, @Param("statusId") Long statusId);
+
+    /**
+     * Rules evaluated after each log ingest: enabled, not soft-deleted, status name ACTIVE (case-insensitive).
+     */
+    @Query(
+            """
+            SELECT r FROM Rule r
+            WHERE r.enabled = true
+              AND r.isDeleted = false
+              AND r.status IS NOT NULL
+              AND r.status.isDeleted = false
+              AND UPPER(TRIM(r.status.name)) = 'ACTIVE'
+            ORDER BY r.id ASC
+            """)
+    List<Rule> findAllActiveForDetection();
 }

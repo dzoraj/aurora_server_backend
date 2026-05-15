@@ -1,7 +1,9 @@
 package rs.igapp.aurora.server.controller;
 
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import rs.igapp.aurora.api.dto.request.LogEventRequest;
@@ -29,6 +31,28 @@ public class LogEventController extends CrudController<LogEventRequest, LogEvent
     public LogEventController(LogEventService logEventService) {
         super(logEventService);
         this.logEventService = logEventService;
+    }
+
+    /**
+     * Concrete {@link LogEventRequest} parameter so Bean Validation sees {@code @NotNull}/{@code @NotBlank}
+     * (validation on generic {@code Request} in {@link CrudController} is not always applied).
+     */
+    @Override
+    @PostMapping
+    public ResponseEntity<LogEventResponse> create(@Valid @RequestBody LogEventRequest request) {
+        LogEventResponse created = logEventService.create(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    @Override
+    @PutMapping("/{id}")
+    public ResponseEntity<LogEventResponse> update(
+            @PathVariable Long id, @Valid @RequestBody LogEventRequest request) {
+        LogEventResponse updated = logEventService.update(id, request);
+        if (updated == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(updated);
     }
 
     // FILTERING ENDPOINTS (from LogEventRepository)
