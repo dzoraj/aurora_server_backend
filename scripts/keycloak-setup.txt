@@ -1,17 +1,22 @@
 Keycloak quick setup for Aurora (development)
 
-1a) Run Keycloak from a ZIP (Windows) — use port 8180 so Aurora can stay on 8080
+1a) Run Keycloak - use port 8180 so Aurora can stay on 8080
    - Install JDK 17+ and set JAVA_HOME if Keycloak does not start.
    - PowerShell (from the Keycloak folder, e.g. C:\Users\igorv\Downloads\keycloak-26.6.1):
        $env:KEYCLOAK_ADMIN="admin"
        $env:KEYCLOAK_ADMIN_PASSWORD="admin"
        .\bin\kc.bat start-dev --http-port=8180
-   - First run may take a minute. Admin UI: http://localhost:8180/
+   - Admin UI: http://localhost:8180/
 
-1b) Run Keycloak (Docker example):
+1b) Run Keycloak (Docker):
    docker run -p 8180:8080 -e KEYCLOAK_ADMIN=admin -e KEYCLOAK_ADMIN_PASSWORD=admin quay.io/keycloak/keycloak:26.0 start-dev
 
 2) Open the admin console at http://localhost:8180/ (log in with the admin user you set above).
+
+
+
+
+
 
 3) Create realm: "aurora"
 
@@ -26,7 +31,6 @@ Keycloak quick setup for Aurora (development)
        http://localhost:4200/*
    - Web origins:
        http://localhost:4200
-       (or "+" for dev only — understand the security tradeoff)
 
 5) Create at least one test user in realm "aurora" (Users -> Add user -> set password).
 
@@ -39,10 +43,4 @@ Keycloak quick setup for Aurora (development)
    - authEnabled: true
    - keycloakIssuer: same URL as issuer-uri above
 
-8) Restart Spring Boot and ng serve. Use "Log in" in the sidebar.
 
-Notes
------
-- Issuer URL must match the "iss" claim inside JWTs (realm URL, no trailing slash).
-- If the API returns 401, check that the access token is sent (browser devtools -> Network)
-  and that CORS still allows http://localhost:4200.

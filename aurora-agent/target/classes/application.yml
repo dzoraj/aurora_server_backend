@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: aurora-agent
+  main:
+    web-application-type: none
+
+logging:
+  level:
+    rs.igapp.aurora.agent: INFO
+
+# Defaults for local dev
+aurora:
+  agent:
+    api-base-url: http://localhost:8080
+    source-id: 1
+    mode: file
+    file-path: ./data/agent-tail.log
+    poll-interval-ms: 2000
+    message-prefix: ""
+    # Shared secret with server aurora.security.agent-ingest-api-keys 
+    ingest-api-key: ${AURORA_AGENT_INGEST_API_KEY:}
+    oauth:
+      # Leave blank unless using OAuth --->> Example: token-uri + client-id + client-secret or username/password.
+      token-uri: ""
+      client-id: ""
+      client-secret: ""
+      username: ""
+      password: ""
+      access-token: ${AURORA_AGENT_OAUTH_ACCESS_TOKEN:}
